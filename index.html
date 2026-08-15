@@ -131,6 +131,22 @@
   .obtn:hover { border-color: var(--gold); color: var(--gold); }
   .obtn.done { border-color: var(--help); color: var(--help); }
 
+  /* folded away, because the page is for reading and this is for sending */
+  .fold {
+    margin-top: 34px;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .fold > summary {
+    cursor: pointer; font-size: 14px; list-style: none;
+  }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary::before { content: "▸ "; color: var(--mut); }
+  .fold[open] > summary::before { content: "▾ "; }
+  .fold > summary:hover { color: var(--gold); }
+  .fold .note { margin: 10px 0 8px; }
+  .fold .bulk { margin-bottom: 4px; }
+
   /* one plain block of the lot, for pasting somewhere else entirely */
   .bulk {
     position: relative;
@@ -181,12 +197,14 @@
 
   <div id="out"></div>
 
-  <h2 class="set" style="margin-top:34px">คัดลอกทั้งหมด — เอาไปส่งต่อ</h2>
-  <p class="note">รายการเดียวจบ ก็อปแล้ววางในแชท/ดิสคอร์ดได้เลย</p>
-  <div class="bulk">
-    <button class="obtn" id="copyall" type="button">คัดลอกทั้งหมด</button>
-    <pre id="plain"></pre>
-  </div>
+  <details class="fold">
+    <summary>📋 รายการแบบข้อความ — กดเพื่อเปิด</summary>
+    <p class="note">ก็อปแล้ววางในแชท/ดิสคอร์ดได้เลย</p>
+    <div class="bulk">
+      <button class="obtn" id="copyall" type="button">คัดลอกทั้งหมด</button>
+      <pre id="plain"></pre>
+    </div>
+  </details>
 
   <footer>
     ทุกคำสั่งใช้จาก console ได้ ไม่ต้องใส่ชื่อผู้เล่น · <code>count</code> คือจำนวนของขวัญที่ส่งมาพร้อมกัน (combo) ใส่หรือไม่ใส่ก็ได้<br>
@@ -197,15 +215,15 @@
 <script>
 const DATA = [
   {
-    cat: "set", title: "ส่งชนะ / ส่งแพ้",
+    cat: "set", title: "ส่งชนะ / ส่งแพ้", head: "ชนะ / แพ้",
     note: "จบรอบทันที ไม่ต้องรอตึกเต็มหรือระเบิดแตก",
     rows: [
-      { cmd: "/ylt win", arg: "", desc: "ส่งชนะ — คัทซีน + title" },
-      { cmd: "/ylt lose", arg: "", desc: "ส่งแพ้ — คัทซีน + title" }
+      { cmd: "/ylt win", arg: "", desc: "ส่งชนะ จบรอบทันที" },
+      { cmd: "/ylt lose", arg: "", desc: "ส่งแพ้ จบรอบทันที" }
     ]
   },
   {
-    cat: "help", title: "ช่วย — ดันตึกขึ้น",
+    cat: "help", title: "ช่วย — ดันตึกขึ้น", head: "ช่วย", action: "ดันตึกขึ้น",
     note: "ยิ่งแพงยิ่งดันเยอะ ส่งพร้อมกันหลายชิ้นจะมาเร็วขึ้นแต่แบ่งกันคนละส่วน",
     rows: [
       { cmd: "/ylt help", arg: " <model> [count]", desc: "ดันตึกขึ้นด้วยโมเดลที่เลือก" },
@@ -217,7 +235,7 @@ const DATA = [
     ]
   },
   {
-    cat: "prank", title: "แกล้ง — ทุบตึกลง",
+    cat: "prank", title: "แกล้ง — ทุบตึกลง", head: "แกล้ง", action: "ทุบตึกลง",
     note: "ทุบตึกก่อน เหลือเท่าไหร่ถึงลงที่ระเบิด ตึกยิ่งสูงยิ่งกันระเบิดได้มาก",
     rows: [
       { cmd: "/ylt prank", arg: " <model> [count]", desc: "ทุบตึกด้วยโมเดลที่เลือก" },
@@ -229,7 +247,7 @@ const DATA = [
     ]
   },
   {
-    cat: "set", title: "อื่นๆ",
+    cat: "set", title: "อื่นๆ", head: "อื่นๆ",
     note: "",
     rows: [
       { cmd: "/ylt setting reset", arg: "", desc: "ไว้รีเซ็ตตอนมีปัญหา" }
@@ -309,17 +327,35 @@ out.addEventListener("click", e => {
   });
 });
 
-/* The whole card as one block of text.
-   Built from the same DATA the cards are, so the list somebody pastes into a
-   chat can never drift from the list on the page. */
+/* The whole page as one block of text, laid out the way the owner writes it:
+   a heading, then a command on its own line, then what it does on the next.
+   Built from the same DATA the cards are, so what somebody pastes into a chat
+   can never drift from what is on the page. */
 const OVERLAY_URL = "http://localhost:8123/avo.html";
-const plain = [
-  "🗼 ต่อตึก (YL Tower) — คำสั่ง",
-  "โอเวอเลย์ OBS: " + OVERLAY_URL,
-  ...DATA.flatMap(g => ["", g.title,
-    ...g.rows.map(r => r.cmd + r.arg + (r.desc ? " — " + r.desc : "")
-      + (r.tier ? " — " + r.tier : ""))])
-].join("\n");
+const SITE_URL = "https://aotgtr.github.io/ylt-commands/";
+const SAMPLE = { "/ylt help": "5", "/ylt prank": "5" };
+
+function plainLines() {
+  const out = [
+    "โอเวอเลย์", OVERLAY_URL,
+    "เว็ปคำสั่ง", SITE_URL,
+    "คำสั่ง"
+  ];
+  for (const g of DATA) {
+    out.push("", g.head || g.title);
+    for (const r of g.rows) {
+      // A count somebody can send as it stands, rather than a <placeholder>
+      // they have to fill in — the whole point of this block is pasting.
+      const n = SAMPLE[r.cmd] ? "" : (r.arg.includes("[count]") ? " 5" : "");
+      if (r.arg.includes("<model>")) continue;
+      out.push(r.cmd + n);
+      const said = r.desc || [g.action, r.tier].filter(Boolean).join(" ");
+      if (said) out.push(said);
+    }
+  }
+  return out.join("\n");
+}
+const plain = plainLines();
 document.getElementById("plain").textContent = plain;
 
 function flash(btn) {
