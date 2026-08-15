@@ -15,19 +15,7 @@
     --prank: #f87171;
     --set: #60a5fa;
     --gold: #fbbf24;
-  }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #f5f6f8;
-      --panel: #ffffff;
-      --line: #e2e5ea;
-      --text: #1a1d23;
-      --mut: #5b6472;
-      --help: #16a34a;
-      --prank: #dc2626;
-      --set: #2563eb;
-      --gold: #b45309;
-    }
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   body {
@@ -162,6 +150,14 @@
 <script>
 const DATA = [
   {
+    cat: "set", title: "ส่งชนะ / ส่งแพ้",
+    note: "จบรอบทันที ไม่ต้องรอตึกเต็มหรือระเบิดแตก",
+    rows: [
+      { cmd: "/ylt win", arg: "", desc: "ส่งชนะ — คัทซีน + title" },
+      { cmd: "/ylt lose", arg: "", desc: "ส่งแพ้ — คัทซีน + title" }
+    ]
+  },
+  {
     cat: "help", title: "ช่วย — ดันตึกขึ้น",
     note: "ยิ่งแพงยิ่งดันเยอะ ส่งพร้อมกันหลายชิ้นจะมาเร็วขึ้นแต่แบ่งกันคนละส่วน",
     rows: [
@@ -189,8 +185,6 @@ const DATA = [
     cat: "set", title: "อื่นๆ",
     note: "",
     rows: [
-      { cmd: "/ylt win", arg: "", desc: "จบรอบแบบชนะ — คัทซีน + title" },
-      { cmd: "/ylt lose", arg: "", desc: "จบรอบแบบแพ้ — คัทซีน + title" },
       { cmd: "/ylt setting reset", arg: "", desc: "ไว้รีเซ็ตตอนมีปัญหา" }
     ]
   }
