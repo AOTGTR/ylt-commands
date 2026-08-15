@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🗼 YL Tower — คำสั่ง</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --line: #262b36;
+    --text: #e8eaef;
+    --mut: #8a91a0;
+    --help: #4ade80;
+    --prank: #f87171;
+    --set: #60a5fa;
+    --gold: #fbbf24;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --line: #e2e5ea;
+      --text: #1a1d23;
+      --mut: #5b6472;
+      --help: #16a34a;
+      --prank: #dc2626;
+      --set: #2563eb;
+      --gold: #b45309;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px 16px 64px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Noto Sans Thai", system-ui, -apple-system, sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  .lead { margin: 0 0 20px; color: var(--mut); font-size: 14px; }
+
+  /* search */
+  .searchbox { position: relative; margin-bottom: 12px; }
+  .searchbox input, .ghost {
+    width: 100%;
+    padding: 13px 74px 13px 14px;
+    font: 15px ui-monospace, "Cascadia Code", Consolas, monospace;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+  }
+  .searchbox input {
+    position: relative;
+    background: transparent;
+    color: var(--text);
+    outline: none;
+  }
+  .searchbox input:focus { border-color: var(--set); }
+  .ghost {
+    position: absolute; inset: 0;
+    background: var(--panel);
+    color: var(--mut);
+    pointer-events: none;
+    white-space: pre;
+    overflow: hidden;
+  }
+  .tabhint {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 11px; color: var(--mut); pointer-events: none;
+    border: 1px solid var(--line); border-radius: 5px; padding: 2px 7px;
+  }
+
+  /* filter chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .chip {
+    cursor: pointer; font: inherit; font-size: 13px;
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 14px;
+  }
+  .chip:hover { border-color: var(--mut); }
+  .chip.on { border-color: currentColor; }
+  .chip[data-cat="help"].on { color: var(--help); }
+  .chip[data-cat="prank"].on { color: var(--prank); }
+  .chip[data-cat="set"].on { color: var(--set); }
+  .chip[data-cat="all"].on { color: var(--gold); }
+
+  /* groups */
+  h2 { font-size: 15px; margin: 26px 0 8px; letter-spacing: .02em; }
+  h2.help { color: var(--help); }
+  h2.prank { color: var(--prank); }
+  h2.set { color: var(--set); }
+  .note { color: var(--mut); font-size: 13px; margin: 0 0 8px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 10px;
+    align-items: baseline;
+    padding: 11px 14px;
+    border-top: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .row:first-child { border-top: 0; }
+  .row:hover { background: rgba(127, 143, 176, .10); }
+  .row.copied { background: rgba(74, 222, 128, .18); }
+  .cmd {
+    font: 14px ui-monospace, "Cascadia Code", Consolas, monospace;
+    word-break: break-word;
+  }
+  .cmd .arg { color: var(--mut); }
+  .desc { color: var(--mut); font-size: 13.5px; }
+  .tier {
+    display: inline-block; font-size: 11px; padding: 1px 7px;
+    border: 1px solid var(--line); border-radius: 999px; color: var(--gold);
+    margin-inline-start: 6px; white-space: nowrap;
+  }
+  .empty { color: var(--mut); padding: 18px 4px; font-size: 14px; }
+  footer { margin-top: 34px; color: var(--mut); font-size: 12.5px; }
+  footer a { color: var(--set); }
+  code {
+    font: 12.5px ui-monospace, Consolas, monospace;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 5px; padding: 1px 5px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🗼 YL Tower — คำสั่ง</h1>
+  <p class="lead">พิมพ์ค้นหา แล้วกด Tab เพื่อเติมคำสั่งอัตโนมัติ · คลิกคำสั่งเพื่อคัดลอก · กด <code>/</code> เพื่อไปที่ช่องค้นหา</p>
+
+  <div class="searchbox">
+    <div class="ghost" id="ghost"></div>
+    <input id="q" type="text" placeholder="/ylt help ..." autocomplete="off" spellcheck="false">
+    <span class="tabhint">Tab</span>
+  </div>
+
+  <div class="chips">
+    <button class="chip on" data-cat="all">ทั้งหมด</button>
+    <button class="chip" data-cat="help">ช่วย</button>
+    <button class="chip" data-cat="prank">แกล้ง</button>
+    <button class="chip" data-cat="set">อื่นๆ</button>
+  </div>
+
+  <div id="out"></div>
+
+  <footer>
+    ทุกคำสั่งใช้จาก console ได้ ไม่ต้องใส่ชื่อผู้เล่น · <code>count</code> คือจำนวนของขวัญที่ส่งมาพร้อมกัน (combo) ใส่หรือไม่ใส่ก็ได้<br>
+    © 2026 YL ENTERTAINMENT
+  </footer>
+</div>
+
+<script>
+const DATA = [
+  {
+    cat: "help", title: "ช่วย — ดันตึกขึ้น",
+    note: "ยิ่งแพงยิ่งดันเยอะ ส่งพร้อมกันหลายชิ้นจะมาเร็วขึ้นแต่แบ่งกันคนละส่วน",
+    rows: [
+      { cmd: "/ylt help", arg: " <model> [count]", desc: "ดันตึกขึ้นด้วยโมเดลที่เลือก" },
+      { cmd: "/ylt help qilinarm", arg: " [count]", desc: "แขนกิเลน — 33 ชั้น", tier: "tier 1 · 1 💎" },
+      { cmd: "/ylt help dragon", arg: " [count]", desc: "มังกรพันรอบยอดตึก — 210 ชั้น", tier: "tier 2 · 15 💎" },
+      { cmd: "/ylt help phoenix", arg: " [count]", desc: "หงส์ไฟ — 380 ชั้น", tier: "tier 3 · 30 💎" },
+      { cmd: "/ylt help nezha_merge", arg: " [count]", desc: "นาจา — 1000 ชั้น", tier: "tier 4 · 100 💎" },
+      { cmd: "/ylt help eccogboundicarosphinx", arg: " [count]", desc: "สฟิงซ์ มีคัทซีนเปิดตัว — 2600 ชั้น", tier: "tier 5 · 299 💎" }
+    ]
+  },
+  {
+    cat: "prank", title: "แกล้ง — ทุบตึกลง",
+    note: "ทุบตึกก่อน เหลือเท่าไหร่ถึงลงที่ระเบิด ตึกยิ่งสูงยิ่งกันระเบิดได้มาก",
+    rows: [
+      { cmd: "/ylt prank", arg: " <model> [count]", desc: "ทุบตึกด้วยโมเดลที่เลือก" },
+      { cmd: "/ylt prank tiancanfoot", arg: " [count]", desc: "เท้าเหยียบลงบนหลังคา — 33 ชั้น", tier: "tier 1 · 1 💎" },
+      { cmd: "/ylt prank hulkbuster", arg: " [count]", desc: "ฮัลค์บัสเตอร์ — 210 ชั้น", tier: "tier 2 · 15 💎" },
+      { cmd: "/ylt prank j36", arg: " [count]", desc: "เครื่องบินทิ้งระเบิด — 380 ชั้น", tier: "tier 3 · 30 💎" },
+      { cmd: "/ylt prank dongfengv", arg: " [count]", desc: "รถยิงมิสไซล์ — 1000 ชั้น", tier: "tier 4 · 100 💎" },
+      { cmd: "/ylt prank akaza", arg: " [count]", desc: "อาคาซ่า มีคัทซีนเปิดตัว — 2600 ชั้น", tier: "tier 5 · 299 💎" }
+    ]
+  },
+  {
+    cat: "set", title: "อื่นๆ",
+    note: "",
+    rows: [
+      { cmd: "/ylt win", arg: "", desc: "จบรอบแบบชนะ — คัทซีน + title" },
+      { cmd: "/ylt lose", arg: "", desc: "จบรอบแบบแพ้ — คัทซีน + title" },
+      { cmd: "/ylt setting reset", arg: "", desc: "ไว้รีเซ็ตตอนมีปัญหา" }
+    ]
+  }
+];
+
+const out = document.getElementById("out");
+const q = document.getElementById("q");
+const ghost = document.getElementById("ghost");
+let cat = "all";
+
+const all = DATA.flatMap(g => g.rows.map(r => r.cmd + r.arg));
+
+function render() {
+  const term = q.value.trim().toLowerCase();
+  let html = "";
+  for (const g of DATA) {
+    if (cat !== "all" && cat !== g.cat) continue;
+    const rows = g.rows.filter(r =>
+      !term || (r.cmd + r.arg + " " + r.desc).toLowerCase().includes(term));
+    if (!rows.length) continue;
+    html += `<h2 class="${g.cat}">${g.title}</h2>`;
+    if (g.note) html += `<p class="note">${g.note}</p>`;
+    html += `<div class="card">`;
+    for (const r of rows) {
+      html += `<div class="row" data-copy="${r.cmd}">`
+        + `<div class="cmd">${r.cmd}<span class="arg">${r.arg}</span></div>`
+        + `<div class="desc">${r.desc}${r.tier ? `<span class="tier">${r.tier}</span>` : ""}</div>`
+        + `</div>`;
+    }
+    html += `</div>`;
+  }
+  out.innerHTML = html || `<p class="empty">ไม่เจอคำสั่งที่ค้นหา</p>`;
+}
+
+function suggestion() {
+  const v = q.value;
+  if (!v) return "";
+  const hit = all.find(c => c.toLowerCase().startsWith(v.toLowerCase()));
+  return hit ? v + hit.slice(v.length) : "";
+}
+
+function paint() {
+  ghost.textContent = suggestion();
+  render();
+}
+
+q.addEventListener("input", paint);
+q.addEventListener("keydown", e => {
+  if (e.key === "Tab" || e.key === "ArrowRight") {
+    const s = suggestion();
+    if (s && s !== q.value) { e.preventDefault(); q.value = s; paint(); }
+  } else if (e.key === "Escape") {
+    q.value = ""; paint();
+  }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== q) { e.preventDefault(); q.focus(); }
+});
+
+for (const chip of document.querySelectorAll(".chip")) {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
+    chip.classList.add("on");
+    cat = chip.dataset.cat;
+    render();
+  });
+}
+
+out.addEventListener("click", e => {
+  const row = e.target.closest(".row");
+  if (!row) return;
+  navigator.clipboard.writeText(row.dataset.copy).then(() => {
+    row.classList.add("copied");
+    setTimeout(() => row.classList.remove("copied"), 420);
+  });
+});
+
+paint();
+</script>
+</body>
+</html>
