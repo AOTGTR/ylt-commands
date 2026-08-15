@@ -111,6 +111,38 @@
     border: 1px solid var(--line); border-radius: 999px; color: var(--gold);
     margin-inline-start: 6px; white-space: nowrap;
   }
+  /* the overlay address, which is the other thing a streamer needs */
+  .overlay {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 18px;
+  }
+  .olabel { font-size: 12.5px; color: var(--mut); }
+  .ourl {
+    font: 14px ui-monospace, "Cascadia Code", Consolas, monospace;
+    color: var(--gold); word-break: break-all;
+  }
+  .obtn {
+    cursor: pointer; font: inherit; font-size: 13px;
+    background: transparent; color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 14px;
+  }
+  .obtn:hover { border-color: var(--gold); color: var(--gold); }
+  .obtn.done { border-color: var(--help); color: var(--help); }
+
+  /* one plain block of the lot, for pasting somewhere else entirely */
+  .bulk {
+    position: relative;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px;
+  }
+  .bulk .obtn { position: absolute; top: 10px; right: 10px; }
+  .bulk pre {
+    margin: 0; padding-inline-end: 110px;
+    font: 13px ui-monospace, "Cascadia Code", Consolas, monospace;
+    color: var(--text); white-space: pre-wrap; word-break: break-word;
+  }
   .empty { color: var(--mut); padding: 18px 4px; font-size: 14px; }
   footer { margin-top: 34px; color: var(--mut); font-size: 12.5px; }
   footer a { color: var(--set); }
@@ -126,6 +158,14 @@
   <h1>🗼 YL Tower — คำสั่ง</h1>
   <p class="lead">พิมพ์ค้นหา แล้วกด Tab เพื่อเติมคำสั่งอัตโนมัติ · คลิกคำสั่งเพื่อคัดลอก · กด <code>/</code> เพื่อไปที่ช่องค้นหา</p>
 
+  <div class="overlay" id="overlay">
+    <div>
+      <div class="olabel">โอเวอเลย์ — ใส่ใน OBS เป็น Browser Source</div>
+      <div class="ourl">http://localhost:8123/avo.html</div>
+    </div>
+    <button class="obtn" type="button">คัดลอก</button>
+  </div>
+
   <div class="searchbox">
     <div class="ghost" id="ghost"></div>
     <input id="q" type="text" placeholder="/ylt help ..." autocomplete="off" spellcheck="false">
@@ -140,6 +180,13 @@
   </div>
 
   <div id="out"></div>
+
+  <h2 class="set" style="margin-top:34px">คัดลอกทั้งหมด — เอาไปส่งต่อ</h2>
+  <p class="note">รายการเดียวจบ ก็อปแล้ววางในแชท/ดิสคอร์ดได้เลย</p>
+  <div class="bulk">
+    <button class="obtn" id="copyall" type="button">คัดลอกทั้งหมด</button>
+    <pre id="plain"></pre>
+  </div>
 
   <footer>
     ทุกคำสั่งใช้จาก console ได้ ไม่ต้องใส่ชื่อผู้เล่น · <code>count</code> คือจำนวนของขวัญที่ส่งมาพร้อมกัน (combo) ใส่หรือไม่ใส่ก็ได้<br>
@@ -261,6 +308,30 @@ out.addEventListener("click", e => {
     setTimeout(() => row.classList.remove("copied"), 420);
   });
 });
+
+/* The whole card as one block of text.
+   Built from the same DATA the cards are, so the list somebody pastes into a
+   chat can never drift from the list on the page. */
+const OVERLAY_URL = "http://localhost:8123/avo.html";
+const plain = [
+  "🗼 ต่อตึก (YL Tower) — คำสั่ง",
+  "โอเวอเลย์ OBS: " + OVERLAY_URL,
+  ...DATA.flatMap(g => ["", g.title,
+    ...g.rows.map(r => r.cmd + r.arg + (r.desc ? " — " + r.desc : "")
+      + (r.tier ? " — " + r.tier : ""))])
+].join("\n");
+document.getElementById("plain").textContent = plain;
+
+function flash(btn) {
+  btn.classList.add("done");
+  const was = btn.textContent;
+  btn.textContent = "คัดลอกแล้ว";
+  setTimeout(() => { btn.classList.remove("done"); btn.textContent = was; }, 1100);
+}
+document.querySelector("#overlay .obtn").addEventListener("click", e =>
+  navigator.clipboard.writeText(OVERLAY_URL).then(() => flash(e.currentTarget)));
+document.getElementById("copyall").addEventListener("click", e =>
+  navigator.clipboard.writeText(plain).then(() => flash(e.currentTarget)));
 
 paint();
 </script>
