@@ -334,7 +334,7 @@ out.addEventListener("click", e => {
    can never drift from what is on the page. */
 const OVERLAY_URL = "http://localhost:8123/avo.html";
 const SITE_URL = "https://aotgtr.github.io/ylt-commands/";
-const SAMPLE = { "/ylt help": "5", "/ylt prank": "5" };
+const SAMPLE = { "/ylt help": "1", "/ylt prank": "1" };
 
 function plainLines() {
   const out = [
@@ -347,7 +347,7 @@ function plainLines() {
     for (const r of g.rows) {
       // A count somebody can send as it stands, rather than a <placeholder>
       // they have to fill in — the whole point of this block is pasting.
-      const n = SAMPLE[r.cmd] ? "" : (r.arg.includes("[count]") ? " 5" : "");
+      const n = SAMPLE[r.cmd] ? "" : (r.arg.includes("[count]") ? " 1" : "");
       if (r.arg.includes("<model>")) continue;
       out.push(r.cmd + n);
       const said = r.desc || [g.action, r.tier].filter(Boolean).join(" ");
