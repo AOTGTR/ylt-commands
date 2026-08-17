@@ -201,7 +201,10 @@
     <summary>📋 รายการแบบข้อความ — กดเพื่อเปิด</summary>
     <p class="note">ก็อปแล้ววางในแชท/ดิสคอร์ดได้เลย</p>
     <div class="bulk">
-      <button class="obtn" id="copyall" type="button">คัดลอกทั้งหมด</button>
+      <div class="bulkbtns">
+        <button class="obtn" id="pricetoggle" type="button">💎 แสดงราคา</button>
+        <button class="obtn" id="copyall" type="button">คัดลอกทั้งหมด</button>
+      </div>
       <pre id="plain"></pre>
     </div>
   </details>
@@ -336,6 +339,12 @@ const OVERLAY_URL = "http://localhost:8123/avo.html";
 const SITE_URL = "https://aotgtr.github.io/ylt-commands/";
 const SAMPLE = { "/ylt help": "1", "/ylt prank": "1" };
 
+/* Prices stay off the public cards; this block is the owner's own paste
+   sheet, and the toggle is for the day the numbers are needed and forgotten.
+   Off by default, so a shared screen shows tiers alone. */
+const PRICE = { 1: 1, 2: 15, 3: 30, 4: 100, 5: 299 };
+let showPrice = false;
+
 function plainLines() {
   const out = [
     "โอเวอเลย์", OVERLAY_URL,
@@ -350,14 +359,28 @@ function plainLines() {
       const n = SAMPLE[r.cmd] ? "" : (r.arg.includes("[count]") ? " 1" : "");
       if (r.arg.includes("<model>")) continue;
       out.push(r.cmd + n);
-      const said = r.desc || [g.action, r.tier].filter(Boolean).join(" ");
+      let said = r.desc || [g.action, r.tier].filter(Boolean).join(" ");
+      if (showPrice && r.tier) {
+        const m = r.tier.match(/tier (\d)/);
+        if (m && PRICE[m[1]]) said += " \u00b7 " + PRICE[m[1]] + " เพชร";
+      }
       if (said) out.push(said);
     }
   }
   return out.join("\n");
 }
-const plain = plainLines();
-document.getElementById("plain").textContent = plain;
+function renderPlain() {
+  document.getElementById("plain").textContent = plainLines();
+}
+renderPlain();
+document.getElementById("pricetoggle").addEventListener("click", e => {
+  showPrice = !showPrice;
+  e.currentTarget.textContent = showPrice
+      ? "💎 ซ่อนราคา"
+      : "💎 แสดงราคา";
+  e.currentTarget.classList.toggle("on", showPrice);
+  renderPlain();
+});
 
 function flash(btn) {
   btn.classList.add("done");
@@ -368,7 +391,7 @@ function flash(btn) {
 document.querySelector("#overlay .obtn").addEventListener("click", e =>
   navigator.clipboard.writeText(OVERLAY_URL).then(() => flash(e.currentTarget)));
 document.getElementById("copyall").addEventListener("click", e =>
-  navigator.clipboard.writeText(plain).then(() => flash(e.currentTarget)));
+  navigator.clipboard.writeText(plainLines()).then(() => flash(e.currentTarget)));
 
 paint();
 </script>
